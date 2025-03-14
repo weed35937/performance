@@ -9,6 +9,36 @@ import joblib
 from student_performance_analysis import load_data, prepare_features, train_model
 import os
 
+def check_requirements():
+    try:
+        # Check if required packages are available
+        import streamlit
+        import pandas
+        import numpy
+        import matplotlib.pyplot
+        import seaborn
+        import sklearn
+        
+        # Check if data directory exists
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        data_dir = os.path.join(current_dir, 'data')
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+            st.warning("Created data directory. Please add the required dataset files.")
+        
+        return True
+    except ImportError as e:
+        st.error(f"Missing required package: {str(e)}")
+        st.info("Please install all required packages using: pip install -r requirements.txt")
+        return False
+    except Exception as e:
+        st.error(f"Setup error: {str(e)}")
+        return False
+
+# Run requirements check
+if not check_requirements():
+    st.stop()
+
 # Page configuration must be the first Streamlit command
 st.set_page_config(
     page_title="Student Performance Analytics",
@@ -304,19 +334,42 @@ with st.spinner('Loading data and models...'):
     @st.cache_data
     def load_cached_data(selected_dataset):
         try:
-            # Try to load dataset files
-            math_path = 'data/student-mat.csv'
-            por_path = 'data/student-por.csv'
+            # Get the absolute path to the data directory
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            data_dir = os.path.join(current_dir, 'data')
+            
+            # Check if data directory exists, if not create it
+            if not os.path.exists(data_dir):
+                os.makedirs(data_dir)
+            
+            math_path = os.path.join(data_dir, 'student-mat.csv')
+            por_path = os.path.join(data_dir, 'student-por.csv')
             
             if not os.path.exists(math_path) or not os.path.exists(por_path):
+                st.error("Dataset files not found!")
+                st.info("""
+                ### Missing Dataset Files
+                Please ensure you have the required dataset files:
+                1. Download the datasets:
+                   - [Mathematics Dataset](https://archive.ics.uci.edu/ml/machine-learning-databases/00320/student-mat.csv)
+                   - [Portuguese Dataset](https://archive.ics.uci.edu/ml/machine-learning-databases/00320/student-por.csv)
+                2. Create a 'data' folder in the same directory as this script
+                3. Place both files in the 'data' folder
+                """)
                 return None, "Please download the required dataset files and place them in the 'data' directory."
                 
             if selected_dataset == "Mathematics":
+                if not os.path.exists(math_path):
+                    return None, f"Mathematics dataset not found at {math_path}"
                 return load_data(math_path), None
             else:
+                if not os.path.exists(por_path):
+                    return None, f"Portuguese dataset not found at {por_path}"
                 return load_data(por_path), None
+            
         except Exception as e:
-            return None, f"An error occurred while loading the data. Please check if the data files are correctly formatted."
+            st.error(f"Error loading data: {str(e)}")
+            return None, f"An error occurred while loading the data: {str(e)}"
 
     @st.cache_resource
     def load_cached_models(df):
