@@ -606,65 +606,40 @@ elif page == "Predict Performance":
                     'Fedu': [father_edu],
                     'freetime': [free_time],
                     'health': [health],
-                    # Add default values for other required features
                     'age': [15],
                     'failures': [0],
-                    'famrel': [4],
+                    'traveltime': [2],
                     'goout': [3],
                     'Dalc': [1],
                     'Walc': [1],
-                    # Encoded categorical variables (0/1)
-                    'school_GP': [1],
-                    'school_MS': [0],
-                    'sex_F': [1],
-                    'sex_M': [0],
-                    'address_R': [0],
-                    'address_U': [1],
-                    'famsize_GT3': [1],
-                    'famsize_LE3': [0],
-                    'Pstatus_A': [0],
-                    'Pstatus_T': [1],
-                    'Mjob_at_home': [0],
-                    'Mjob_health': [0],
-                    'Mjob_other': [1],
-                    'Mjob_services': [0],
-                    'Mjob_teacher': [0],
-                    'Fjob_at_home': [0],
-                    'Fjob_health': [0],
-                    'Fjob_other': [1],
-                    'Fjob_services': [0],
-                    'Fjob_teacher': [0],
-                    'reason_course': [1],
-                    'reason_home': [0],
-                    'reason_other': [0],
-                    'reason_reputation': [0],
-                    'guardian_father': [0],
-                    'guardian_mother': [1],
-                    'guardian_other': [0],
-                    'schoolsup_no': [1],
-                    'schoolsup_yes': [0],
-                    'famsup_no': [1],
-                    'famsup_yes': [0],
-                    'paid_no': [1],
-                    'paid_yes': [0],
-                    'activities_no': [1],
-                    'activities_yes': [0],
-                    'nursery_no': [0],
-                    'nursery_yes': [1],
-                    'higher_no': [0],
-                    'higher_yes': [1],
-                    'internet_no': [0],
-                    'internet_yes': [1],
-                    'romantic_no': [1],
-                    'romantic_yes': [0]
+                    'school': ['GP'],
+                    'sex': ['F'],
+                    'address': ['U'],
+                    'famsize': ['GT3'],
+                    'Pstatus': ['T'],
+                    'Mjob': ['other'],
+                    'Fjob': ['other'],
+                    'reason': ['course'],
+                    'guardian': ['mother'],
+                    'schoolsup': ['no'],
+                    'famsup': ['no'],
+                    'paid': ['no'],
+                    'activities': ['no'],
+                    'nursery': ['yes'],
+                    'higher': ['yes'],
+                    'internet': ['yes'],
+                    'romantic': ['no']
                 })
+
+                # Prepare features and make predictions
+                X_pred, _ = prepare_features(input_data)
                 
-                # Make predictions
-                binary_pred = model_binary.predict_proba(input_data)
-                multi_pred = model_multi.predict_proba(input_data)
+                if X_pred is None:
+                    st.error("Unable to generate prediction. Please check your input values.")
+                    st.stop()
                 
-                # Display success message
-                st.success("Prediction generated successfully!")
+                binary_pred = model_binary.predict_proba(X_pred)
+                multi_pred = model_multi.predict_proba(X_pred)
                 
                 # Display results with enhanced styling and animations
                 st.markdown("""
@@ -703,7 +678,14 @@ elif page == "Predict Performance":
                 
             except Exception as e:
                 st.error("Unable to generate prediction. Please check your input values and try again.")
-                st.info("Make sure all required fields are filled correctly.")
+                st.info("""
+                Please make sure:
+                1. All input fields are filled correctly
+                2. The values are within expected ranges
+                3. The dataset is loaded properly
+                
+                If the issue persists, try refreshing the page or selecting a different dataset.
+                """)
 
 else:  # About page
     st.title("About This Dashboard")

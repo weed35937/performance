@@ -63,35 +63,58 @@ def visualize_data(df):
 
 def prepare_features(df, target='binary'):
     """Prepare features for modeling."""
-    # Select relevant features
-    feature_columns = [
-        'age', 'studytime', 'failures', 'absences',
-        'G1', 'G2',  # First and second period grades
-        'Medu', 'Fedu',  # Parent's education
-        'traveltime', 'studytime',
-        'freetime', 'goout', 'health'
-    ]
-    
-    # Convert categorical variables to dummy variables
-    categorical_columns = ['school', 'sex', 'address', 'famsize', 'Pstatus', 
-                         'Mjob', 'Fjob', 'reason', 'guardian', 'schoolsup', 
-                         'famsup', 'paid', 'activities', 'nursery', 'higher', 
-                         'internet', 'romantic']
-    
-    # Create dummy variables
-    df_encoded = pd.get_dummies(df, columns=categorical_columns)
-    
-    # Combine numerical and encoded categorical features
-    X = df_encoded[feature_columns + [col for col in df_encoded.columns 
-                                    if any(cat in col for cat in categorical_columns)]]
-    
-    # Select target variable based on classification type
-    if target == 'binary':
-        y = df_encoded['performance_binary']
-    else:
-        y = df_encoded['performance_class']
-    
-    return X, y
+    try:
+        # Create binary target variable if G3 exists
+        if 'G3' in df.columns:
+            df['performance_binary'] = (df['G3'] >= 15).astype(int)
+            df['performance_class'] = pd.qcut(df['G3'], q=4, labels=['Poor', 'Fair', 'Good', 'Excellent'])
+        
+        # Select relevant features
+        feature_columns = [
+            'age', 'studytime', 'failures', 'absences',
+            'G1', 'G2',  # First and second period grades
+            'Medu', 'Fedu',  # Parent's education
+            'traveltime',  # Home to school travel time
+            'freetime', 'goout', 'health'
+        ]
+        
+        # Convert categorical variables to dummy variables
+        categorical_columns = ['school', 'sex', 'address', 'famsize', 'Pstatus', 
+                             'Mjob', 'Fjob', 'reason', 'guardian', 'schoolsup', 
+                             'famsup', 'paid', 'activities', 'nursery', 'higher', 
+                             'internet', 'romantic']
+        
+        # Create dummy variables for input data
+        df_encoded = pd.get_dummies(df, columns=categorical_columns)
+        
+        # Get reference data and its encoded columns
+        reference_data = pd.read_csv('data/student-mat.csv', sep=';')
+        reference_encoded = pd.get_dummies(reference_data, columns=categorical_columns)
+        
+        # Get all columns that should be in the feature set
+        dummy_columns = [col for col in reference_encoded.columns 
+                        if any(cat in col for cat in categorical_columns)]
+        all_columns = feature_columns + dummy_columns
+        
+        # Add missing columns with zeros
+        for col in all_columns:
+            if col not in df_encoded.columns:
+                df_encoded[col] = 0
+        
+        # Select only the required columns in the correct order
+        X = df_encoded[all_columns].copy()
+        
+        # Select target variable based on classification type
+        if target == 'binary':
+            y = df['performance_binary'] if 'performance_binary' in df else None
+        else:
+            y = df['performance_class'] if 'performance_class' in df else None
+        
+        return X, y
+        
+    except Exception as e:
+        print(f"Error in prepare_features: {str(e)}")
+        return None, None
 
 def train_model(X, y, model_type='binary'):
     """Train a Random Forest model."""
@@ -113,6 +136,9 @@ def train_model(X, y, model_type='binary'):
     
     # Make predictions
     y_pred = model.predict(X_test_scaled)
+    
+    # Save the scaler with the model
+    model.scaler_ = scaler
     
     return model, X_train_scaled, X_test_scaled, y_train, y_test, y_pred
 
