@@ -1,4 +1,4 @@
-# Student Performance Analytics Dashboard
+# [Student Performance Analytics Dashboard](https://student-perform-analysis.streamlit.app/)
 
 An interactive Streamlit dashboard for analyzing and predicting student performance using machine learning.
 
