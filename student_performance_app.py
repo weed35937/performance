@@ -7,6 +7,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 import joblib
 from student_performance_analysis import load_data, prepare_features, train_model
+import os
 
 # Page configuration must be the first Streamlit command
 st.set_page_config(
@@ -295,15 +296,54 @@ st.markdown("""
 with st.spinner('Loading data and models...'):
     @st.cache_data
     def load_cached_data():
-        return load_data('student-mat.csv')
+        try:
+            # Try to load both dataset files
+            math_path = 'data/student-mat.csv'
+            por_path = 'data/student-por.csv'
+            
+            if not os.path.exists(math_path) or not os.path.exists(por_path):
+                st.error("""
+                Dataset files not found! Please download both dataset files:
+                1. Visit: https://archive.ics.uci.edu/ml/datasets/Student+Performance
+                2. Download both:
+                   - 'student-mat.csv' (Mathematics)
+                   - 'student-por.csv' (Portuguese)
+                3. Place them in the 'data' directory
+                
+                Or use the direct download links below:
+                """)
+                st.markdown("""
+                - [Download student-mat.csv](https://archive.ics.uci.edu/ml/machine-learning-databases/00320/student-mat.csv)
+                - [Download student-por.csv](https://archive.ics.uci.edu/ml/machine-learning-databases/00320/student-por.csv)
+                """)
+                st.stop()
+                
+            # Let user choose which dataset to use
+            dataset_choice = st.radio(
+                "Choose dataset to analyze:",
+                ["Mathematics", "Portuguese"],
+                help="Select which course data to analyze"
+            )
+            
+            if dataset_choice == "Mathematics":
+                return load_data(math_path)
+            else:
+                return load_data(por_path)
+        except Exception as e:
+            st.error(f"Error loading data: {str(e)}")
+            st.stop()
 
     @st.cache_resource
     def load_cached_models(df):
-        X_binary, y_binary = prepare_features(df, target='binary')
-        X_multi, y_multi = prepare_features(df, target='multiclass')
-        model_binary, *_ = train_model(X_binary, y_binary, 'binary')
-        model_multi, *_ = train_model(X_multi, y_multi, 'multiclass')
-        return model_binary, model_multi, X_binary.columns
+        try:
+            X_binary, y_binary = prepare_features(df, target='binary')
+            X_multi, y_multi = prepare_features(df, target='multiclass')
+            model_binary, *_ = train_model(X_binary, y_binary, 'binary')
+            model_multi, *_ = train_model(X_multi, y_multi, 'multiclass')
+            return model_binary, model_multi, X_binary.columns
+        except Exception as e:
+            st.error(f"Error loading models: {str(e)}")
+            st.stop()
 
     df = load_cached_data()
     model_binary, model_multi, feature_names = load_cached_models(df)

@@ -10,9 +10,14 @@ An interactive Streamlit dashboard for analyzing and predicting student performa
 - Key performance indicators
 - Beautiful UI with responsive design
 
-## Live Demo
+## Data Setup (Required)
 
-Visit the live application at: [Your Streamlit App URL]
+Before running the application, you need to download the dataset:
+
+1. Download the dataset:
+   - Visit [UCI Student Performance Dataset](https://archive.ics.uci.edu/ml/datasets/Student+Performance)
+   - Or use direct link: [student-mat.csv](https://archive.ics.uci.edu/ml/machine-learning-databases/00320/student-mat.csv)
+2. Place the downloaded `student-mat.csv` file in the `data` directory of the project
 
 ## Local Development
 
@@ -45,14 +50,24 @@ The application will be available at http://localhost:8501
 This application is ready to be deployed on Streamlit Community Cloud:
 
 1. Fork this repository
-2. Go to [share.streamlit.io](https://share.streamlit.io)
-3. Sign in with GitHub
-4. Deploy your forked repository
-5. Select the main file as `student_performance_app.py`
+2. Download the dataset and place `student-mat.csv` in the `data` directory
+3. Commit and push the changes including the data file
+4. Go to [share.streamlit.io](https://share.streamlit.io)
+5. Sign in with GitHub
+6. Deploy your forked repository
+7. Select the main file as `student_performance_app.py`
 
-## Data
-
-The application uses the UCI Student Performance Dataset. Make sure to place your data file (`student-mat.csv`) in the root directory.
+## Project Structure
+```
+.
+├── data/
+│   └── student-mat.csv    # Dataset file (you need to download this)
+├── student_performance_app.py
+├── student_performance_analysis.py
+├── requirements.txt
+├── README.md
+└── .gitignore
+```
 
 ## Requirements
 
