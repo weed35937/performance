@@ -294,44 +294,29 @@ st.markdown("""
 
 # Load and cache data with loading animation
 with st.spinner('Loading data and models...'):
+    # Dataset selection moved outside cached function
+    dataset_choice = st.radio(
+        "Choose dataset to analyze:",
+        ["Mathematics", "Portuguese"],
+        help="Select which course data to analyze"
+    )
+
     @st.cache_data
-    def load_cached_data():
+    def load_cached_data(selected_dataset):
         try:
-            # Try to load both dataset files
+            # Try to load dataset files
             math_path = 'data/student-mat.csv'
             por_path = 'data/student-por.csv'
             
             if not os.path.exists(math_path) or not os.path.exists(por_path):
-                st.error("""
-                Dataset files not found! Please download both dataset files:
-                1. Visit: https://archive.ics.uci.edu/ml/datasets/Student+Performance
-                2. Download both:
-                   - 'student-mat.csv' (Mathematics)
-                   - 'student-por.csv' (Portuguese)
-                3. Place them in the 'data' directory
+                return None, "Please download the required dataset files and place them in the 'data' directory."
                 
-                Or use the direct download links below:
-                """)
-                st.markdown("""
-                - [Download student-mat.csv](https://archive.ics.uci.edu/ml/machine-learning-databases/00320/student-mat.csv)
-                - [Download student-por.csv](https://archive.ics.uci.edu/ml/machine-learning-databases/00320/student-por.csv)
-                """)
-                st.stop()
-                
-            # Let user choose which dataset to use
-            dataset_choice = st.radio(
-                "Choose dataset to analyze:",
-                ["Mathematics", "Portuguese"],
-                help="Select which course data to analyze"
-            )
-            
-            if dataset_choice == "Mathematics":
-                return load_data(math_path)
+            if selected_dataset == "Mathematics":
+                return load_data(math_path), None
             else:
-                return load_data(por_path)
+                return load_data(por_path), None
         except Exception as e:
-            st.error(f"Error loading data: {str(e)}")
-            st.stop()
+            return None, f"An error occurred while loading the data. Please check if the data files are correctly formatted."
 
     @st.cache_resource
     def load_cached_models(df):
@@ -340,13 +325,31 @@ with st.spinner('Loading data and models...'):
             X_multi, y_multi = prepare_features(df, target='multiclass')
             model_binary, *_ = train_model(X_binary, y_binary, 'binary')
             model_multi, *_ = train_model(X_multi, y_multi, 'multiclass')
-            return model_binary, model_multi, X_binary.columns
+            return model_binary, model_multi, X_binary.columns, None
         except Exception as e:
-            st.error(f"Error loading models: {str(e)}")
-            st.stop()
+            return None, None, None, "An error occurred while preparing the models. Please check your data."
 
-    df = load_cached_data()
-    model_binary, model_multi, feature_names = load_cached_models(df)
+    # Load data with error handling
+    df, data_error = load_cached_data(dataset_choice)
+    
+    if data_error:
+        st.warning(data_error)
+        st.info("""
+        To get started:
+        1. Download the required datasets:
+           - [Mathematics Dataset](https://archive.ics.uci.edu/ml/machine-learning-databases/00320/student-mat.csv)
+           - [Portuguese Dataset](https://archive.ics.uci.edu/ml/machine-learning-databases/00320/student-por.csv)
+        2. Place them in the 'data' directory
+        3. Refresh the page
+        """)
+        st.stop()
+    
+    # Load models with error handling
+    model_binary, model_multi, feature_names, model_error = load_cached_models(df)
+    
+    if model_error:
+        st.warning(model_error)
+        st.stop()
 
 # Enhanced sidebar with Bootstrap-style navigation
 with st.sidebar:
